@@ -144,14 +144,49 @@ export class Player {
 
         this.heatWarning = this.heat >= OVERHEAT_THRESHOLD && !this.overheated;
 
-        const move = input.getMoveDirection(this.x, this.y);
+        let moveX = 0, moveY = 0;
+
+        if (input.isLeft()) moveX -= 1;
+        if (input.isRight()) moveX += 1;
+        if (input.isUp()) moveY -= 1;
+        if (input.isDown()) moveY += 1;
+
+        if (input.touchMove.active) {
+            const dx = input.touchMove.targetX - this.x;
+            const dy = input.touchMove.targetY - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 5) {
+                moveX = dx / dist;
+                moveY = dy / dist;
+                const speedMult = Math.min(1, dist / 50);
+                moveX *= speedMult;
+                moveY *= speedMult;
+            }
+        } else if (input.mouse.active) {
+            const dx = input.mouse.x - this.x;
+            const dy = input.mouse.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 5) {
+                moveX = dx / dist;
+                moveY = dy / dist;
+                const speedMult = Math.min(1, dist / 40);
+                moveX *= speedMult;
+                moveY *= speedMult;
+            }
+        }
+
+        if (moveX !== 0 && moveY !== 0) {
+            const len = Math.sqrt(moveX * moveX + moveY * moveY);
+            if (len > 1) { moveX /= len; moveY /= len; }
+        }
+
         const isTouchOrMouse = input.touchMove.active || input.mouse.active;
         const moveSpeed = isTouchOrMouse ? this.speed * 1.5 : this.speed;
 
-        this.x += move.dx * moveSpeed * dt;
-        this.y += move.dy * moveSpeed * dt;
+        this.x += moveX * moveSpeed * dt;
+        this.y += moveY * moveSpeed * dt;
 
-        this.tilt += (move.dx * 0.3 - this.tilt) * 8 * dt;
+        this.tilt += (moveX * 0.3 - this.tilt) * 8 * dt;
 
         this.x = Math.max(this.width / 2, Math.min(this.cw - this.width / 2, this.x));
         this.y = Math.max(this.height / 2, Math.min(this.ch - this.height / 2, this.y));
