@@ -283,7 +283,10 @@ export class Player {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.tilt);
 
-        ctx.fillStyle = '#3366ff';
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#4488ff';
+
+        ctx.fillStyle = '#4488ff';
         ctx.beginPath();
         ctx.moveTo(0, -this.height / 2);
         ctx.lineTo(-this.width / 2, this.height / 2);
@@ -293,16 +296,30 @@ export class Player {
         ctx.closePath();
         ctx.fill();
 
-        ctx.fillStyle = '#2255dd';
+        ctx.shadowBlur = 0;
+
+        const gradient = ctx.createLinearGradient(0, -this.height / 2, 0, this.height / 2);
+        gradient.addColorStop(0, '#66aaff');
+        gradient.addColorStop(0.5, '#3366dd');
+        gradient.addColorStop(1, '#2244aa');
+        ctx.fillStyle = gradient;
         ctx.fillRect(-this.width / 3, -this.height / 4, this.width / 3 * 2, this.height / 2);
 
-        ctx.fillStyle = '#66aaff';
+        ctx.fillStyle = '#88ccff';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#88ccff';
         ctx.beginPath();
         ctx.arc(0, -this.height / 6, 5, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
 
-        ctx.fillStyle = '#ff4400';
-        ctx.fillRect(-2, this.height / 2 - 2, 4, 6);
+        ctx.fillStyle = '#ff6633';
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = '#ff4400';
+        ctx.fillRect(-2, this.height / 2 - 2, 4, 8);
+        ctx.fillRect(-6, this.height / 2, 3, 4);
+        ctx.fillRect(4, this.height / 2, 3, 4);
+        ctx.shadowBlur = 0;
 
         if (this.heat > 30) {
             const heatAlpha = (this.heat - 30) / 70;

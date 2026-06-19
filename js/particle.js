@@ -70,19 +70,19 @@ export class ParticlePool {
     }
 
     emitExplosion(x, y, intensity = 1) {
-        const colors = ['#ff4400', '#ff6600', '#ffaa00', '#ff2200', '#ffcc00', '#ffffff'];
-        for (let i = 0; i < 25 * intensity; i++) {
+        const colors = ['#ff5533', '#ff8844', '#ffcc33', '#ff3322', '#ffee55', '#ffffff', '#ffaa66'];
+        for (let i = 0; i < 30 * intensity; i++) {
             this.emit(x, y, 1, {
-                speed: 250 * intensity, life: 0.7, color: colors[i % colors.length],
-                size: 4 + Math.random() * 3, gravity: 80, friction: 0.94
+                speed: 280 * intensity, life: 0.8, color: colors[i % colors.length],
+                size: 3 + Math.random() * 4, gravity: 60, friction: 0.93
             });
         }
     }
 
     emitSparkle(x, y) {
-        const colors = ['#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#00ff00'];
-        for (let i = 0; i < 12; i++) {
-            this.emit(x, y, 1, { speed: 120, life: 0.5, color: colors[i % colors.length], size: 2.5, gravity: -40 });
+        const colors = ['#ffff66', '#ff66ff', '#66ffff', '#ffffff', '#66ff66', '#ffaa88'];
+        for (let i = 0; i < 15; i++) {
+            this.emit(x, y, 1, { speed: 140, life: 0.6, color: colors[i % colors.length], size: 3, gravity: -50 });
         }
     }
 

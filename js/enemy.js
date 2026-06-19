@@ -143,7 +143,7 @@ export class Enemy {
 
     takeDamage(amount) {
         this.health -= amount;
-        this.hitFlash = 0.12;
+        this.hitFlash = 0.15;
         if (this.health <= 0) { this.active = false; return true; }
         return false;
     }
@@ -155,18 +155,28 @@ export class Enemy {
 
         let baseColor;
         if (this.enemyType === 'tank') {
-            baseColor = '#993399';
+            baseColor = '#aa44dd';
         } else if (this.enemyType === 'fast') {
-            baseColor = '#33cc33';
+            baseColor = '#44ee44';
         } else {
-            const colors = ['#ff6633', '#ff9933', '#cc3333', '#ff3366', '#ffaa00', '#ff5577'];
+            const colors = ['#ff7744', '#ffaa33', '#ee4455', '#ff5588', '#ffcc22', '#ff6688'];
             baseColor = colors[this.variant % colors.length];
         }
 
-        ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : baseColor;
+        if (this.hitFlash > 0) {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#ffffff';
+            ctx.fillStyle = '#ffffff';
+        } else {
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = baseColor;
+            ctx.fillStyle = baseColor;
+        }
         ctx.beginPath();
         ctx.ellipse(0, 0, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        ctx.shadowBlur = 0;
 
         ctx.fillStyle = '#ffcc00';
         ctx.beginPath();

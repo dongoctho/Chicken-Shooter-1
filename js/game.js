@@ -78,11 +78,26 @@ export class Game {
     }
 
     initStars() {
+        const starColors = ['#ffffff', '#aaccff', '#ffddaa', '#ffaacc', '#aaffee'];
         for (let i = 0; i < 80; i++) {
-            this.stars.push({ x: Math.random() * this.width, y: Math.random() * this.height, size: Math.random() * 1.5 + 0.5, speed: 30 + Math.random() * 40, alpha: 0.3 + Math.random() * 0.7 });
+            this.stars.push({
+                x: Math.random() * this.width,
+                y: Math.random() * this.height,
+                size: Math.random() * 1.5 + 0.5,
+                speed: 30 + Math.random() * 40,
+                alpha: 0.3 + Math.random() * 0.7,
+                color: starColors[Math.floor(Math.random() * starColors.length)]
+            });
         }
         for (let i = 0; i < 40; i++) {
-            this.stars2.push({ x: Math.random() * this.width, y: Math.random() * this.height, size: Math.random() * 2 + 1, speed: 60 + Math.random() * 60, alpha: 0.2 + Math.random() * 0.5 });
+            this.stars2.push({
+                x: Math.random() * this.width,
+                y: Math.random() * this.height,
+                size: Math.random() * 2 + 1,
+                speed: 60 + Math.random() * 60,
+                alpha: 0.2 + Math.random() * 0.5,
+                color: starColors[Math.floor(Math.random() * starColors.length)]
+            });
         }
     }
 
@@ -337,11 +352,13 @@ export class Game {
             if (enemy.takeDamage(bullet.damage)) {
                 this.score += enemy.score;
                 this.enemyManager.onEnemyKilled();
-                this.particlePool.emitExplosion(enemy.x, enemy.y);
-                this.shake(0.12, 3);
+                this.particlePool.emitExplosion(enemy.x, enemy.y, 1.2);
+                this.shake(0.15, 4);
                 if (Math.random() < 0.45) this.powerupManager.spawn(enemy.x, enemy.y);
             } else {
-                this.particlePool.emit(enemy.x, enemy.y, 3, { speed: 60, life: 0.2, color: '#ffffff', size: 2 });
+                this.particlePool.emit(enemy.x, enemy.y, 6, { speed: 80, life: 0.25, color: '#ffff00', size: 3 });
+                this.particlePool.emit(enemy.x, enemy.y, 4, { speed: 50, life: 0.2, color: '#ffffff', size: 2 });
+                this.particlePool.emitFlash(enemy.x - 5, enemy.y - 5, 10, 10);
             }
         }
 
@@ -486,9 +503,16 @@ export class Game {
     }
 
     drawStars(ctx) {
-        ctx.fillStyle = '#ffffff';
-        for (const s of this.stars) { ctx.globalAlpha = s.alpha; ctx.fillRect(s.x, s.y, s.size, s.size); }
-        for (const s of this.stars2) { ctx.globalAlpha = s.alpha * 0.5; ctx.fillRect(s.x, s.y, s.size, s.size); }
+        for (const s of this.stars) {
+            ctx.globalAlpha = s.alpha;
+            ctx.fillStyle = s.color;
+            ctx.fillRect(s.x, s.y, s.size, s.size);
+        }
+        for (const s of this.stars2) {
+            ctx.globalAlpha = s.alpha * 0.5;
+            ctx.fillStyle = s.color;
+            ctx.fillRect(s.x, s.y, s.size, s.size);
+        }
         ctx.globalAlpha = 1;
     }
 
