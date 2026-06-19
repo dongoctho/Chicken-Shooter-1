@@ -59,6 +59,7 @@ export class Input {
 
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
+            this.shootRequest = true;
             for (const touch of e.changedTouches) {
                 const r = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / r.width;
