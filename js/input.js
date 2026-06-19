@@ -170,8 +170,8 @@ export class Input {
     isUp() { return this.isKeyDown('ArrowUp') || this.isKeyDown('KeyW'); }
     isDown() { return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS'); }
 
-    isShooting() { return this.mouse.down || this.isKeyDown('Space'); }
-    isShootJustPressed() { return this.mouse.justPressed || this.isKeyJustPressed('Space'); }
+    isShooting() { return this.mouse.down || this.isKeyDown('Space') || this.touchMove.active; }
+    isShootJustPressed() { return this.mouse.justPressed || this.isKeyJustPressed('Space') || this.touchStart; }
     isStart() { return this.isKeyJustPressed('Space') || this.mouse.justPressed || this.touchStart; }
     isPause() { return this.isKeyJustPressed('KeyP'); }
     isBomb() { return this.isKeyJustPressed('KeyB'); }
