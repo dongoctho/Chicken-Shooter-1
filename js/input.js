@@ -3,11 +3,9 @@ export class Input {
         this.keys = {};
         this.prevKeys = {};
         this.mouse = { x: 0, y: 0, down: false, justPressed: false };
-        this.touches = [];
+        this.touchStart = false;
         this.touchStick = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
         this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        this.shootRequest = false;
-        this.skillRequest = false;
         this.fireButton = { active: false, x: 0, y: 0, radius: 45 };
         this.moveTouchId = null;
         this.moveStartX = 0;
@@ -42,7 +40,6 @@ export class Input {
             e.preventDefault();
             this.mouse.down = true;
             this.mouse.justPressed = true;
-            this.shootRequest = true;
         });
         canvas.addEventListener('mouseup', () => { this.mouse.down = false; });
         canvas.addEventListener('contextmenu', e => e.preventDefault());
@@ -50,7 +47,6 @@ export class Input {
 
     _bindTouch() {
         const canvas = document.getElementById('gameCanvas');
-        const cw = 600;
         const ch = 800;
 
         this.fireButton.x = 70;
@@ -59,7 +55,8 @@ export class Input {
 
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
-            this.shootRequest = true;
+            this.touchStart = true;
+
             for (const touch of e.changedTouches) {
                 const r = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / r.width;
@@ -69,7 +66,7 @@ export class Input {
 
                 const dxBtn = tx - this.fireButton.x;
                 const dyBtn = ty - this.fireButton.y;
-                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 15) {
+                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 20) {
                     this.fireButton.active = true;
                     continue;
                 }
@@ -94,8 +91,8 @@ export class Input {
                     const scaleY = canvas.height / r.height;
                     const tx = (touch.clientX - r.left) * scaleX;
                     const ty = (touch.clientY - r.top) * scaleY;
-                    this.touchStick.dx = (tx - this.touchStick.startX) / 30;
-                    this.touchStick.dy = (ty - this.touchStick.startY) / 30;
+                    this.touchStick.dx = (tx - this.touchStick.startX) / 25;
+                    this.touchStick.dy = (ty - this.touchStick.startY) / 25;
                     this.touchStick.dx = Math.max(-1, Math.min(1, this.touchStick.dx));
                     this.touchStick.dy = Math.max(-1, Math.min(1, this.touchStick.dy));
                     this.touchStick.startX = tx;
@@ -122,7 +119,7 @@ export class Input {
                 const ty = (touch.clientY - r.top) * scaleY;
                 const dxBtn = tx - this.fireButton.x;
                 const dyBtn = ty - this.fireButton.y;
-                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 15) {
+                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 20) {
                     fireStillActive = true;
                 }
             }
@@ -145,8 +142,7 @@ export class Input {
     update() {
         this.prevKeys = { ...this.keys };
         this.mouse.justPressed = false;
-        this.shootRequest = false;
-        this.skillRequest = false;
+        this.touchStart = false;
     }
 
     isKeyDown(code) { return !!this.keys[code]; }
@@ -158,9 +154,9 @@ export class Input {
     isDown() { return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS') || (this.touchStick.active && this.touchStick.dy > 0.2); }
 
     isShooting() { return this.mouse.down || this.isKeyDown('Space') || this.fireButton.active; }
-    isStart() { return this.isKeyJustPressed('Space') || this.mouse.justPressed || this.shootRequest; }
+    isStart() { return this.isKeyJustPressed('Space') || this.mouse.justPressed || this.touchStart; }
     isPause() { return this.isKeyJustPressed('KeyP'); }
-    isBomb() { return this.isKeyJustPressed('KeyB') || this.skillRequest; }
+    isBomb() { return this.isKeyJustPressed('KeyB'); }
     isSkill() { return this.isKeyJustPressed('KeyE'); }
 }
 
