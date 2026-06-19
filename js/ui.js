@@ -120,8 +120,9 @@ export class UI {
         ctx.fillStyle = '#888';
         ctx.font = '13px monospace';
         ctx.fillText('Desktop: WASD/Arrows + Mouse/Space', this.cw / 2, this.ch / 2 + 100);
-        ctx.fillText('Mobile: Drag to move, tap to shoot', this.cw / 2, this.ch / 2 + 125);
-        ctx.fillText('B: Bomb | P: Pause', this.cw / 2, this.ch / 2 + 150);
+        ctx.fillText('Mobile: Drag anywhere to move', this.cw / 2, this.ch / 2 + 125);
+        ctx.fillText('Tap FIRE button to shoot', this.cw / 2, this.ch / 2 + 150);
+        ctx.fillText('B: Bomb | P: Pause', this.cw / 2, this.ch / 2 + 175);
 
         ctx.restore();
     }
@@ -221,18 +222,45 @@ export class UI {
         ctx.restore();
     }
 
-    drawMobileControls(ctx) {
+    drawMobileControls(ctx, fireButtonActive) {
         ctx.save();
-        ctx.globalAlpha = 0.15;
+
+        ctx.globalAlpha = 0.12;
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(70, this.ch - 70, 50, 0, Math.PI * 2);
+        ctx.arc(this.cw / 2, this.ch / 2, 100, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 0.3;
-        ctx.font = '12px monospace';
+
+        ctx.globalAlpha = 0.25;
+        ctx.font = '11px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('DRAG', 70, this.ch - 70);
+        ctx.fillText('DRAG TO MOVE', this.cw / 2, this.ch / 2);
+
+        const btnX = 70;
+        const btnY = this.ch - 80;
+        const btnR = 45;
+
+        ctx.globalAlpha = fireButtonActive ? 0.5 : 0.3;
+        ctx.fillStyle = fireButtonActive ? '#ff4444' : '#ff6666';
+        ctx.beginPath();
+        ctx.arc(btnX, btnY, btnR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = fireButtonActive ? 0.8 : 0.5;
+        ctx.beginPath();
+        ctx.arc(btnX, btnY, btnR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.globalAlpha = fireButtonActive ? 1 : 0.7;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('FIRE', btnX, btnY);
+
         ctx.restore();
     }
 }

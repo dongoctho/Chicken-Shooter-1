@@ -8,6 +8,10 @@ export class Input {
         this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         this.shootRequest = false;
         this.skillRequest = false;
+        this.fireButton = { active: false, x: 0, y: 0, radius: 45 };
+        this.moveTouchId = null;
+        this.moveStartX = 0;
+        this.moveStartY = 0;
 
         this._bindKeyboard();
         this._bindMouse();
@@ -22,7 +26,7 @@ export class Input {
             this.keys[e.code] = true;
         });
         window.addEventListener('keyup', e => { this.keys[e.code] = false; });
-        window.addEventListener('blur', () => { this.keys = {}; this.mouse.down = false; });
+        window.addEventListener('blur', () => { this.keys = {}; this.mouse.down = false; this.touchStick.active = false; this.fireButton.active = false; });
     }
 
     _bindMouse() {
@@ -46,8 +50,12 @@ export class Input {
 
     _bindTouch() {
         const canvas = document.getElementById('gameCanvas');
-        let controlTouchId = null;
-        let controlStartX = 0, controlStartY = 0;
+        const cw = 600;
+        const ch = 800;
+
+        this.fireButton.x = 70;
+        this.fireButton.y = ch - 80;
+        this.fireButton.radius = 45;
 
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
@@ -58,16 +66,20 @@ export class Input {
                 const tx = (touch.clientX - r.left) * scaleX;
                 const ty = (touch.clientY - r.top) * scaleY;
 
-                if (controlTouchId === null && tx < canvas.width / 2) {
-                    controlTouchId = touch.identifier;
-                    controlStartX = tx;
-                    controlStartY = ty;
+                const dxBtn = tx - this.fireButton.x;
+                const dyBtn = ty - this.fireButton.y;
+                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 15) {
+                    this.fireButton.active = true;
+                    continue;
+                }
+
+                if (this.moveTouchId === null) {
+                    this.moveTouchId = touch.identifier;
+                    this.moveStartX = tx;
+                    this.moveStartY = ty;
                     this.touchStick.active = true;
                     this.touchStick.startX = tx;
                     this.touchStick.startY = ty;
-                } else {
-                    this.shootRequest = true;
-                    this.skillRequest = true;
                 }
             }
         }, { passive: false });
@@ -75,40 +87,57 @@ export class Input {
         canvas.addEventListener('touchmove', e => {
             e.preventDefault();
             for (const touch of e.changedTouches) {
-                if (touch.identifier === controlTouchId) {
+                if (touch.identifier === this.moveTouchId) {
                     const r = canvas.getBoundingClientRect();
                     const scaleX = canvas.width / r.width;
                     const scaleY = canvas.height / r.height;
                     const tx = (touch.clientX - r.left) * scaleX;
                     const ty = (touch.clientY - r.top) * scaleY;
-                    this.touchStick.dx = (tx - this.touchStick.startX) / 40;
-                    this.touchStick.dy = (ty - this.touchStick.startY) / 40;
+                    this.touchStick.dx = (tx - this.touchStick.startX) / 30;
+                    this.touchStick.dy = (ty - this.touchStick.startY) / 30;
                     this.touchStick.dx = Math.max(-1, Math.min(1, this.touchStick.dx));
                     this.touchStick.dy = Math.max(-1, Math.min(1, this.touchStick.dy));
+                    this.touchStick.startX = tx;
+                    this.touchStick.startY = ty;
                 }
             }
         }, { passive: false });
 
         canvas.addEventListener('touchend', e => {
             for (const touch of e.changedTouches) {
-                if (touch.identifier === controlTouchId) {
-                    controlTouchId = null;
+                if (touch.identifier === this.moveTouchId) {
+                    this.moveTouchId = null;
                     this.touchStick.active = false;
                     this.touchStick.dx = 0;
                     this.touchStick.dy = 0;
                 }
             }
+            let fireStillActive = false;
+            for (const touch of e.touches) {
+                const r = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / r.width;
+                const scaleY = canvas.height / r.height;
+                const tx = (touch.clientX - r.left) * scaleX;
+                const ty = (touch.clientY - r.top) * scaleY;
+                const dxBtn = tx - this.fireButton.x;
+                const dyBtn = ty - this.fireButton.y;
+                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 15) {
+                    fireStillActive = true;
+                }
+            }
+            if (!fireStillActive) this.fireButton.active = false;
         });
 
         canvas.addEventListener('touchcancel', e => {
             for (const touch of e.changedTouches) {
-                if (touch.identifier === controlTouchId) {
-                    controlTouchId = null;
+                if (touch.identifier === this.moveTouchId) {
+                    this.moveTouchId = null;
                     this.touchStick.active = false;
                     this.touchStick.dx = 0;
                     this.touchStick.dy = 0;
                 }
             }
+            this.fireButton.active = false;
         });
     }
 
@@ -122,12 +151,12 @@ export class Input {
     isKeyDown(code) { return !!this.keys[code]; }
     isKeyJustPressed(code) { return this.keys[code] && !this.prevKeys[code]; }
 
-    isLeft() { return this.isKeyDown('ArrowLeft') || this.isKeyDown('KeyA') || (this.touchStick.active && this.touchStick.dx < -0.3); }
-    isRight() { return this.isKeyDown('ArrowRight') || this.isKeyDown('KeyD') || (this.touchStick.active && this.touchStick.dx > 0.3); }
-    isUp() { return this.isKeyDown('ArrowUp') || this.isKeyDown('KeyW') || (this.touchStick.active && this.touchStick.dy < -0.3); }
-    isDown() { return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS') || (this.touchStick.active && this.touchStick.dy > 0.3); }
+    isLeft() { return this.isKeyDown('ArrowLeft') || this.isKeyDown('KeyA') || (this.touchStick.active && this.touchStick.dx < -0.2); }
+    isRight() { return this.isKeyDown('ArrowRight') || this.isKeyDown('KeyD') || (this.touchStick.active && this.touchStick.dx > 0.2); }
+    isUp() { return this.isKeyDown('ArrowUp') || this.isKeyDown('KeyW') || (this.touchStick.active && this.touchStick.dy < -0.2); }
+    isDown() { return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS') || (this.touchStick.active && this.touchStick.dy > 0.2); }
 
-    isShooting() { return this.mouse.down || this.isKeyDown('Space') || this.touchStick.active; }
+    isShooting() { return this.mouse.down || this.isKeyDown('Space') || this.fireButton.active; }
     isStart() { return this.isKeyJustPressed('Space') || this.mouse.justPressed || this.shootRequest; }
     isPause() { return this.isKeyJustPressed('KeyP'); }
     isBomb() { return this.isKeyJustPressed('KeyB') || this.skillRequest; }
