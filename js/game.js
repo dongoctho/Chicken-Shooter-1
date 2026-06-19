@@ -456,14 +456,12 @@ export class Game {
                 break;
             case GAME_STATE.PLAYING:
                 this.drawGameplay(ctx);
-                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer());
-                if (input.isMobile || input.touchActive || input.mouse.active) {
-                    this.ui.drawMobileControls(ctx, input.fireButton.active);
-                }
+                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer(), this.player.fireRate, input.tapSpeed);
+
                 break;
             case GAME_STATE.PAUSED:
                 this.drawGameplay(ctx);
-                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer());
+                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer(), this.player.fireRate, input.tapSpeed);
                 this.ui.drawPauseScreen(ctx);
                 break;
             case GAME_STATE.GAME_OVER:
@@ -474,12 +472,12 @@ export class Game {
                 this.drawGameplay(ctx);
                 this.player.draw(ctx);
                 this.boss.draw(ctx);
-                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer());
+                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer(), this.player.fireRate, input.tapSpeed);
                 break;
             case GAME_STATE.BOSS_FIGHT:
                 this.drawGameplay(ctx);
                 this.boss.draw(ctx);
-                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer());
+                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer(), this.player.fireRate, input.tapSpeed);
                 break;
             case GAME_STATE.VICTORY:
                 this.drawGameplay(ctx);
@@ -487,7 +485,7 @@ export class Game {
                 break;
             case GAME_STATE.WAVE_ANNOUNCE:
                 this.drawGameplay(ctx);
-                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer());
+                this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer(), this.player.fireRate, input.tapSpeed);
                 this.ui.drawWaveAnnouncement(ctx, this.waveManager.getWave(), this.waveAnnounceTimer, this.waveAnnounceMaxTimer);
                 break;
         }

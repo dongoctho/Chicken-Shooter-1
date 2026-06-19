@@ -230,35 +230,35 @@ export class Player {
 
         switch (this.weapon) {
             case WEAPON_TYPE.NORMAL:
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -650, dmg, BULLET_TYPE.PLAYER);
+                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
                 break;
             case WEAPON_TYPE.DOUBLE:
-                this.bulletPool.get(this.x - 7, this.y - this.height / 2, 0, -650, dmg, BULLET_TYPE.PLAYER);
-                this.bulletPool.get(this.x + 7, this.y - this.height / 2, 0, -650, dmg, BULLET_TYPE.PLAYER);
+                this.bulletPool.get(this.x - 7, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                this.bulletPool.get(this.x + 7, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
                 break;
             case WEAPON_TYPE.TRIPLE:
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -650, dmg, BULLET_TYPE.PLAYER);
-                this.bulletPool.get(this.x - 10, this.y - this.height / 2 + 5, -40, -630, dmg, BULLET_TYPE.PLAYER);
-                this.bulletPool.get(this.x + 10, this.y - this.height / 2 + 5, 40, -630, dmg, BULLET_TYPE.PLAYER);
+                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                this.bulletPool.get(this.x - 10, this.y - this.height / 2 + 5, -30, -430, dmg, BULLET_TYPE.PLAYER);
+                this.bulletPool.get(this.x + 10, this.y - this.height / 2 + 5, 30, -430, dmg, BULLET_TYPE.PLAYER);
                 break;
             case WEAPON_TYPE.SPREAD:
                 for (let i = -2; i <= 2; i++) {
                     const angle = -Math.PI / 2 + i * 0.2;
-                    this.bulletPool.get(this.x, this.y - this.height / 2, Math.cos(angle) * 500, Math.sin(angle) * 500, dmg, BULLET_TYPE.PLAYER);
+                    this.bulletPool.get(this.x, this.y - this.height / 2, Math.cos(angle) * 380, Math.sin(angle) * 380, dmg, BULLET_TYPE.PLAYER);
                 }
                 break;
             case WEAPON_TYPE.LASER:
                 assetLoader.playLaser();
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -900, dmg * 1.5, BULLET_TYPE.LASER);
+                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -600, dmg * 1.5, BULLET_TYPE.LASER);
                 break;
             case WEAPON_TYPE.ROCKET:
                 assetLoader.playRocket();
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -400, dmg * 2, BULLET_TYPE.ROCKET);
+                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -300, dmg * 2, BULLET_TYPE.ROCKET);
                 break;
             case WEAPON_TYPE.PLASMA:
-                this.bulletPool.get(this.x - 12, this.y, -20, -500, dmg, BULLET_TYPE.PLASMA);
-                this.bulletPool.get(this.x + 12, this.y, 20, -500, dmg, BULLET_TYPE.PLASMA);
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -550, dmg, BULLET_TYPE.PLASMA);
+                this.bulletPool.get(this.x - 12, this.y, -15, -380, dmg, BULLET_TYPE.PLASMA);
+                this.bulletPool.get(this.x + 12, this.y, 15, -380, dmg, BULLET_TYPE.PLASMA);
+                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -400, dmg, BULLET_TYPE.PLASMA);
                 break;
         }
     }

@@ -6,7 +6,6 @@ export class Input {
         this.touchStart = false;
         this.touchMove = { active: false, targetX: 0, targetY: 0 };
         this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        this.fireButton = { active: false, x: 0, y: 0, radius: 45 };
         this.moveTouchId = null;
         this.touchActive = false;
         this.tapSpeed = 0;
@@ -29,7 +28,6 @@ export class Input {
             this.keys = {};
             this.mouse.down = false;
             this.touchMove.active = false;
-            this.fireButton.active = false;
         });
     }
 
@@ -63,11 +61,6 @@ export class Input {
 
     _bindTouch() {
         const canvas = document.getElementById('gameCanvas');
-        const ch = 800;
-
-        this.fireButton.x = 70;
-        this.fireButton.y = ch - 80;
-        this.fireButton.radius = 45;
 
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
@@ -88,13 +81,6 @@ export class Input {
                 const scaleY = canvas.height / r.height;
                 const tx = (touch.clientX - r.left) * scaleX;
                 const ty = (touch.clientY - r.top) * scaleY;
-
-                const dxBtn = tx - this.fireButton.x;
-                const dyBtn = ty - this.fireButton.y;
-                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 25) {
-                    this.fireButton.active = true;
-                    continue;
-                }
 
                 if (this.moveTouchId === null) {
                     this.moveTouchId = touch.identifier;
@@ -125,20 +111,6 @@ export class Input {
                     this.touchMove.active = false;
                 }
             }
-            let fireStillActive = false;
-            for (const touch of e.touches) {
-                const r = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / r.width;
-                const scaleY = canvas.height / r.height;
-                const tx = (touch.clientX - r.left) * scaleX;
-                const ty = (touch.clientY - r.top) * scaleY;
-                const dxBtn = tx - this.fireButton.x;
-                const dyBtn = ty - this.fireButton.y;
-                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 25) {
-                    fireStillActive = true;
-                }
-            }
-            if (!fireStillActive) this.fireButton.active = false;
             if (e.touches.length === 0) this.touchActive = false;
         });
 
@@ -149,7 +121,6 @@ export class Input {
                     this.touchMove.active = false;
                 }
             }
-            this.fireButton.active = false;
             this.touchActive = false;
         });
     }
@@ -177,7 +148,7 @@ export class Input {
     isUp() { return this.isKeyDown('ArrowUp') || this.isKeyDown('KeyW'); }
     isDown() { return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS'); }
 
-    isShooting() { return this.mouse.down || this.isKeyDown('Space') || this.fireButton.active; }
+    isShooting() { return this.mouse.down || this.isKeyDown('Space'); }
     isStart() { return this.isKeyJustPressed('Space') || this.mouse.justPressed || this.touchStart; }
     isPause() { return this.isKeyJustPressed('KeyP'); }
     isBomb() { return this.isKeyJustPressed('KeyB'); }

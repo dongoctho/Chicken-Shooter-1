@@ -4,7 +4,7 @@ export class UI {
         this.ch = canvasHeight;
     }
 
-    drawHUD(ctx, score, lives, wave, health, maxHealth, bombs, heatPercent, overheated, overheatTimer) {
+    drawHUD(ctx, score, lives, wave, health, maxHealth, bombs, heatPercent, overheated, overheatTimer, fireRate, tapSpeed) {
         ctx.save();
 
         ctx.fillStyle = '#ffffff';
@@ -76,6 +76,17 @@ export class UI {
             ctx.fillStyle = '#ff4444';
             ctx.font = '14px monospace';
             ctx.fillText(`BOMB:${bombs}`, 15, 68);
+        }
+
+        const shotsPerSec = Math.floor(1 / Math.max(0.03, fireRate));
+        ctx.fillStyle = tapSpeed > 0.3 ? '#ffcc00' : '#88aacc';
+        ctx.font = '12px monospace';
+        ctx.fillText(`FIRE: ${shotsPerSec}/s`, 15, 85);
+
+        if (tapSpeed > 0.3) {
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = '10px monospace';
+            ctx.fillText(`BOOST: ${Math.floor(tapSpeed * 100)}%`, 15, 100);
         }
 
         ctx.restore();
@@ -222,45 +233,4 @@ export class UI {
         ctx.restore();
     }
 
-    drawMobileControls(ctx, fireButtonActive) {
-        ctx.save();
-
-        ctx.globalAlpha = 0.12;
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(this.cw / 2, this.ch / 2, 100, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.globalAlpha = 0.25;
-        ctx.font = '11px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('DRAG TO MOVE', this.cw / 2, this.ch / 2);
-
-        const btnX = 70;
-        const btnY = this.ch - 80;
-        const btnR = 45;
-
-        ctx.globalAlpha = fireButtonActive ? 0.5 : 0.3;
-        ctx.fillStyle = fireButtonActive ? '#ff4444' : '#ff6666';
-        ctx.beginPath();
-        ctx.arc(btnX, btnY, btnR, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.globalAlpha = fireButtonActive ? 0.8 : 0.5;
-        ctx.beginPath();
-        ctx.arc(btnX, btnY, btnR, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.globalAlpha = fireButtonActive ? 1 : 0.7;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('FIRE', btnX, btnY);
-
-        ctx.restore();
-    }
 }
