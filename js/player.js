@@ -192,9 +192,17 @@ export class Player {
         this.y = Math.max(this.height / 2, Math.min(this.ch - this.height / 2, this.y));
 
         this.fireTimer -= dt;
-        if (input.isShooting() && this.fireTimer <= 0 && !this.overheated) {
+
+        const isMoving = moveX !== 0 || moveY !== 0;
+        const shouldFire = input.isShooting() || isMoving;
+
+        if (shouldFire && this.fireTimer <= 0 && !this.overheated) {
             this.shoot();
-            this.fireTimer = this.fireRate;
+            let currentFireRate = this.fireRate;
+            if (input.tapSpeed > 0) {
+                currentFireRate = Math.max(0.03, this.fireRate * (1 - input.tapSpeed * 0.5));
+            }
+            this.fireTimer = currentFireRate;
         }
 
         if (this.overheated && Math.random() < 0.3) {

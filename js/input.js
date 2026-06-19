@@ -9,6 +9,8 @@ export class Input {
         this.fireButton = { active: false, x: 0, y: 0, radius: 45 };
         this.moveTouchId = null;
         this.touchActive = false;
+        this.tapSpeed = 0;
+        this.tapTimes = [];
 
         this._bindKeyboard();
         this._bindMouse();
@@ -45,6 +47,14 @@ export class Input {
             e.preventDefault();
             this.mouse.down = true;
             this.mouse.justPressed = true;
+
+            const now = Date.now();
+            this.tapTimes.push(now);
+            if (this.tapTimes.length > 5) this.tapTimes.shift();
+            if (this.tapTimes.length >= 2) {
+                const timeDiff = this.tapTimes[this.tapTimes.length - 1] - this.tapTimes[0];
+                this.tapSpeed = Math.min(1, (this.tapTimes.length - 1) / (timeDiff / 1000 + 0.5));
+            }
         });
         canvas.addEventListener('mouseup', () => { this.mouse.down = false; });
         canvas.addEventListener('contextmenu', e => e.preventDefault());
@@ -63,6 +73,14 @@ export class Input {
             e.preventDefault();
             this.touchStart = true;
             this.touchActive = true;
+
+            const now = Date.now();
+            this.tapTimes.push(now);
+            if (this.tapTimes.length > 5) this.tapTimes.shift();
+            if (this.tapTimes.length >= 2) {
+                const timeDiff = this.tapTimes[this.tapTimes.length - 1] - this.tapTimes[0];
+                this.tapSpeed = Math.min(1, (this.tapTimes.length - 1) / (timeDiff / 1000 + 0.5));
+            }
 
             for (const touch of e.changedTouches) {
                 const r = canvas.getBoundingClientRect();
@@ -140,6 +158,15 @@ export class Input {
         this.prevKeys = { ...this.keys };
         this.mouse.justPressed = false;
         this.touchStart = false;
+
+        if (this.tapTimes.length > 0) {
+            const now = Date.now();
+            const lastTap = this.tapTimes[this.tapTimes.length - 1];
+            if (now - lastTap > 500) {
+                this.tapSpeed = Math.max(0, this.tapSpeed - 0.05);
+                this.tapTimes = [];
+            }
+        }
     }
 
     isKeyDown(code) { return !!this.keys[code]; }
