@@ -457,7 +457,9 @@ export class Game {
             case GAME_STATE.PLAYING:
                 this.drawGameplay(ctx);
                 this.ui.drawHUD(ctx, this.score, this.player.lives, this.waveManager.getWave(), this.player.health, this.player.maxHealth, this.player.bombCount, this.player.getHeatPercent(), this.player.isOverheated(), this.player.getOverheatTimer());
-                if (input.isMobile) this.ui.drawMobileControls(ctx, input.fireButton.active);
+                if (input.isMobile || input.touchActive || input.mouse.active) {
+                    this.ui.drawMobileControls(ctx, input.fireButton.active);
+                }
                 break;
             case GAME_STATE.PAUSED:
                 this.drawGameplay(ctx);

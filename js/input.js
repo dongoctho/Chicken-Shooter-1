@@ -2,18 +2,19 @@ export class Input {
     constructor() {
         this.keys = {};
         this.prevKeys = {};
-        this.mouse = { x: 0, y: 0, down: false, justPressed: false };
+        this.mouse = { x: 0, y: 0, down: false, justPressed: false, active: false };
         this.touchStart = false;
-        this.touchStick = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
+        this.touchStick = { active: false, startX: 0, startY: 0, dx: 0, dy: 0, currentX: 0, currentY: 0 };
         this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         this.fireButton = { active: false, x: 0, y: 0, radius: 45 };
         this.moveTouchId = null;
         this.moveStartX = 0;
         this.moveStartY = 0;
+        this.touchActive = false;
 
         this._bindKeyboard();
         this._bindMouse();
-        if (this.isMobile) this._bindTouch();
+        this._bindTouch();
     }
 
     _bindKeyboard() {
@@ -24,7 +25,12 @@ export class Input {
             this.keys[e.code] = true;
         });
         window.addEventListener('keyup', e => { this.keys[e.code] = false; });
-        window.addEventListener('blur', () => { this.keys = {}; this.mouse.down = false; this.touchStick.active = false; this.fireButton.active = false; });
+        window.addEventListener('blur', () => {
+            this.keys = {};
+            this.mouse.down = false;
+            this.touchStick.active = false;
+            this.fireButton.active = false;
+        });
     }
 
     _bindMouse() {
@@ -35,6 +41,7 @@ export class Input {
             const scaleY = canvas.height / r.height;
             this.mouse.x = (e.clientX - r.left) * scaleX;
             this.mouse.y = (e.clientY - r.top) * scaleY;
+            this.mouse.active = true;
         });
         canvas.addEventListener('mousedown', e => {
             e.preventDefault();
@@ -43,6 +50,7 @@ export class Input {
         });
         canvas.addEventListener('mouseup', () => { this.mouse.down = false; });
         canvas.addEventListener('contextmenu', e => e.preventDefault());
+        canvas.addEventListener('mouseleave', () => { this.mouse.active = false; });
     }
 
     _bindTouch() {
@@ -56,6 +64,7 @@ export class Input {
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
             this.touchStart = true;
+            this.touchActive = true;
 
             for (const touch of e.changedTouches) {
                 const r = canvas.getBoundingClientRect();
@@ -66,7 +75,7 @@ export class Input {
 
                 const dxBtn = tx - this.fireButton.x;
                 const dyBtn = ty - this.fireButton.y;
-                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 20) {
+                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 25) {
                     this.fireButton.active = true;
                     continue;
                 }
@@ -78,6 +87,8 @@ export class Input {
                     this.touchStick.active = true;
                     this.touchStick.startX = tx;
                     this.touchStick.startY = ty;
+                    this.touchStick.currentX = tx;
+                    this.touchStick.currentY = ty;
                 }
             }
         }, { passive: false });
@@ -91,10 +102,12 @@ export class Input {
                     const scaleY = canvas.height / r.height;
                     const tx = (touch.clientX - r.left) * scaleX;
                     const ty = (touch.clientY - r.top) * scaleY;
-                    this.touchStick.dx = (tx - this.touchStick.startX) / 25;
-                    this.touchStick.dy = (ty - this.touchStick.startY) / 25;
+                    this.touchStick.dx = (tx - this.touchStick.startX) / 20;
+                    this.touchStick.dy = (ty - this.touchStick.startY) / 20;
                     this.touchStick.dx = Math.max(-1, Math.min(1, this.touchStick.dx));
                     this.touchStick.dy = Math.max(-1, Math.min(1, this.touchStick.dy));
+                    this.touchStick.currentX = tx;
+                    this.touchStick.currentY = ty;
                     this.touchStick.startX = tx;
                     this.touchStick.startY = ty;
                 }
@@ -119,11 +132,12 @@ export class Input {
                 const ty = (touch.clientY - r.top) * scaleY;
                 const dxBtn = tx - this.fireButton.x;
                 const dyBtn = ty - this.fireButton.y;
-                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 20) {
+                if (Math.sqrt(dxBtn * dxBtn + dyBtn * dyBtn) < this.fireButton.radius + 25) {
                     fireStillActive = true;
                 }
             }
             if (!fireStillActive) this.fireButton.active = false;
+            if (e.touches.length === 0) this.touchActive = false;
         });
 
         canvas.addEventListener('touchcancel', e => {
@@ -136,6 +150,7 @@ export class Input {
                 }
             }
             this.fireButton.active = false;
+            this.touchActive = false;
         });
     }
 
@@ -148,10 +163,36 @@ export class Input {
     isKeyDown(code) { return !!this.keys[code]; }
     isKeyJustPressed(code) { return this.keys[code] && !this.prevKeys[code]; }
 
-    isLeft() { return this.isKeyDown('ArrowLeft') || this.isKeyDown('KeyA') || (this.touchStick.active && this.touchStick.dx < -0.2); }
-    isRight() { return this.isKeyDown('ArrowRight') || this.isKeyDown('KeyD') || (this.touchStick.active && this.touchStick.dx > 0.2); }
-    isUp() { return this.isKeyDown('ArrowUp') || this.isKeyDown('KeyW') || (this.touchStick.active && this.touchStick.dy < -0.2); }
-    isDown() { return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS') || (this.touchStick.active && this.touchStick.dy > 0.2); }
+    isLeft() {
+        return this.isKeyDown('ArrowLeft') || this.isKeyDown('KeyA') ||
+               (this.touchStick.active && this.touchStick.dx < -0.2);
+    }
+    isRight() {
+        return this.isKeyDown('ArrowRight') || this.isKeyDown('KeyD') ||
+               (this.touchStick.active && this.touchStick.dx > 0.2);
+    }
+    isUp() {
+        return this.isKeyDown('ArrowUp') || this.isKeyDown('KeyW') ||
+               (this.touchStick.active && this.touchStick.dy < -0.2);
+    }
+    isDown() {
+        return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS') ||
+               (this.touchStick.active && this.touchStick.dy > 0.2);
+    }
+
+    getMouseDx(targetX) {
+        if (!this.mouse.active || this.touchActive) return 0;
+        const diff = this.mouse.x - targetX;
+        if (Math.abs(diff) < 5) return 0;
+        return Math.sign(diff) * Math.min(1, Math.abs(diff) / 30);
+    }
+
+    getMouseDy(targetY) {
+        if (!this.mouse.active || this.touchActive) return 0;
+        const diff = this.mouse.y - targetY;
+        if (Math.abs(diff) < 5) return 0;
+        return Math.sign(diff) * Math.min(1, Math.abs(diff) / 30);
+    }
 
     isShooting() { return this.mouse.down || this.isKeyDown('Space') || this.fireButton.active; }
     isStart() { return this.isKeyJustPressed('Space') || this.mouse.justPressed || this.touchStart; }

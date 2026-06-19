@@ -145,17 +145,28 @@ export class Player {
         this.heatWarning = this.heat >= OVERHEAT_THRESHOLD && !this.overheated;
 
         let dx = 0, dy = 0;
+        const mouseDx = input.getMouseDx(this.x);
+        const mouseDy = input.getMouseDy(this.y);
+
         if (input.isLeft()) dx -= 1;
+        else if (mouseDx < 0) dx = mouseDx;
         if (input.isRight()) dx += 1;
+        else if (mouseDx > 0) dx = mouseDx;
         if (input.isUp()) dy -= 1;
+        else if (mouseDy < 0) dy = mouseDy;
         if (input.isDown()) dy += 1;
+        else if (mouseDy > 0) dy = mouseDy;
 
         if (dx !== 0 && dy !== 0) {
-            dx *= 0.707; dy *= 0.707;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            dx /= len; dy /= len;
         }
 
-        this.x += dx * this.speed * dt;
-        this.y += dy * this.speed * dt;
+        const isTouchOrMouse = input.mouse.active || input.touchActive;
+        const moveSpeed = isTouchOrMouse ? this.speed * 1.6 : this.speed;
+
+        this.x += dx * moveSpeed * dt;
+        this.y += dy * moveSpeed * dt;
 
         this.tilt += (dx * 0.3 - this.tilt) * 5 * dt;
 
