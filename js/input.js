@@ -4,13 +4,13 @@ export class Input {
         this.prevKeys = {};
         this.mouse = { x: 0, y: 0, down: false, justPressed: false, active: false };
         this.touchStart = false;
-        this.touchStick = { active: false, startX: 0, startY: 0, dx: 0, dy: 0, currentX: 0, currentY: 0 };
+        this.touchMove = { active: false, x: 0, y: 0, targetX: 0, targetY: 0 };
         this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         this.fireButton = { active: false, x: 0, y: 0, radius: 45 };
         this.moveTouchId = null;
-        this.moveStartX = 0;
-        this.moveStartY = 0;
         this.touchActive = false;
+        this.prevTouchX = 0;
+        this.prevTouchY = 0;
 
         this._bindKeyboard();
         this._bindMouse();
@@ -28,7 +28,7 @@ export class Input {
         window.addEventListener('blur', () => {
             this.keys = {};
             this.mouse.down = false;
-            this.touchStick.active = false;
+            this.touchMove.active = false;
             this.fireButton.active = false;
         });
     }
@@ -82,13 +82,13 @@ export class Input {
 
                 if (this.moveTouchId === null) {
                     this.moveTouchId = touch.identifier;
-                    this.moveStartX = tx;
-                    this.moveStartY = ty;
-                    this.touchStick.active = true;
-                    this.touchStick.startX = tx;
-                    this.touchStick.startY = ty;
-                    this.touchStick.currentX = tx;
-                    this.touchStick.currentY = ty;
+                    this.touchMove.active = true;
+                    this.touchMove.x = tx;
+                    this.touchMove.y = ty;
+                    this.touchMove.targetX = tx;
+                    this.touchMove.targetY = ty;
+                    this.prevTouchX = tx;
+                    this.prevTouchY = ty;
                 }
             }
         }, { passive: false });
@@ -102,14 +102,8 @@ export class Input {
                     const scaleY = canvas.height / r.height;
                     const tx = (touch.clientX - r.left) * scaleX;
                     const ty = (touch.clientY - r.top) * scaleY;
-                    this.touchStick.dx = (tx - this.touchStick.startX) / 20;
-                    this.touchStick.dy = (ty - this.touchStick.startY) / 20;
-                    this.touchStick.dx = Math.max(-1, Math.min(1, this.touchStick.dx));
-                    this.touchStick.dy = Math.max(-1, Math.min(1, this.touchStick.dy));
-                    this.touchStick.currentX = tx;
-                    this.touchStick.currentY = ty;
-                    this.touchStick.startX = tx;
-                    this.touchStick.startY = ty;
+                    this.touchMove.targetX = tx;
+                    this.touchMove.targetY = ty;
                 }
             }
         }, { passive: false });
@@ -118,9 +112,7 @@ export class Input {
             for (const touch of e.changedTouches) {
                 if (touch.identifier === this.moveTouchId) {
                     this.moveTouchId = null;
-                    this.touchStick.active = false;
-                    this.touchStick.dx = 0;
-                    this.touchStick.dy = 0;
+                    this.touchMove.active = false;
                 }
             }
             let fireStillActive = false;
@@ -144,9 +136,7 @@ export class Input {
             for (const touch of e.changedTouches) {
                 if (touch.identifier === this.moveTouchId) {
                     this.moveTouchId = null;
-                    this.touchStick.active = false;
-                    this.touchStick.dx = 0;
-                    this.touchStick.dy = 0;
+                    this.touchMove.active = false;
                 }
             }
             this.fireButton.active = false;
@@ -158,40 +148,60 @@ export class Input {
         this.prevKeys = { ...this.keys };
         this.mouse.justPressed = false;
         this.touchStart = false;
+        this.prevTouchX = this.touchMove.x;
+        this.prevTouchY = this.touchMove.y;
+        if (this.touchMove.active) {
+            this.touchMove.x += (this.touchMove.targetX - this.touchMove.x) * 0.4;
+            this.touchMove.y += (this.touchMove.targetY - this.touchMove.y) * 0.4;
+        }
     }
 
     isKeyDown(code) { return !!this.keys[code]; }
     isKeyJustPressed(code) { return this.keys[code] && !this.prevKeys[code]; }
 
-    isLeft() {
-        return this.isKeyDown('ArrowLeft') || this.isKeyDown('KeyA') ||
-               (this.touchStick.active && this.touchStick.dx < -0.2);
-    }
-    isRight() {
-        return this.isKeyDown('ArrowRight') || this.isKeyDown('KeyD') ||
-               (this.touchStick.active && this.touchStick.dx > 0.2);
-    }
-    isUp() {
-        return this.isKeyDown('ArrowUp') || this.isKeyDown('KeyW') ||
-               (this.touchStick.active && this.touchStick.dy < -0.2);
-    }
-    isDown() {
-        return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS') ||
-               (this.touchStick.active && this.touchStick.dy > 0.2);
-    }
+    isLeft() { return this.isKeyDown('ArrowLeft') || this.isKeyDown('KeyA'); }
+    isRight() { return this.isKeyDown('ArrowRight') || this.isKeyDown('KeyD'); }
+    isUp() { return this.isKeyDown('ArrowUp') || this.isKeyDown('KeyW'); }
+    isDown() { return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS'); }
 
-    getMouseDx(targetX) {
-        if (!this.mouse.active || this.touchActive) return 0;
-        const diff = this.mouse.x - targetX;
-        if (Math.abs(diff) < 5) return 0;
-        return Math.sign(diff) * Math.min(1, Math.abs(diff) / 30);
-    }
+    getMoveDirection(playerX, playerY) {
+        let dx = 0, dy = 0;
 
-    getMouseDy(targetY) {
-        if (!this.mouse.active || this.touchActive) return 0;
-        const diff = this.mouse.y - targetY;
-        if (Math.abs(diff) < 5) return 0;
-        return Math.sign(diff) * Math.min(1, Math.abs(diff) / 30);
+        if (this.isLeft()) dx -= 1;
+        if (this.isRight()) dx += 1;
+        if (this.isUp()) dy -= 1;
+        if (this.isDown()) dy += 1;
+
+        if (this.touchMove.active) {
+            const tdx = this.touchMove.x - playerX;
+            const tdy = this.touchMove.y - playerY;
+            const dist = Math.sqrt(tdx * tdx + tdy * tdy);
+            if (dist > 8) {
+                dx = tdx / dist;
+                dy = tdy / dist;
+                const speed = Math.min(1, dist / 80);
+                dx *= speed;
+                dy *= speed;
+            }
+        } else if (this.mouse.active) {
+            const mdx = this.mouse.x - playerX;
+            const mdy = this.mouse.y - playerY;
+            const dist = Math.sqrt(mdx * mdx + mdy * mdy);
+            if (dist > 8) {
+                dx = mdx / dist;
+                dy = mdy / dist;
+                const speed = Math.min(1, dist / 60);
+                dx *= speed;
+                dy *= speed;
+            }
+        }
+
+        if (dx !== 0 && dy !== 0) {
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 1) { dx /= len; dy /= len; }
+        }
+
+        return { dx, dy };
     }
 
     isShooting() { return this.mouse.down || this.isKeyDown('Space') || this.fireButton.active; }

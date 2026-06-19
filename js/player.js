@@ -144,31 +144,14 @@ export class Player {
 
         this.heatWarning = this.heat >= OVERHEAT_THRESHOLD && !this.overheated;
 
-        let dx = 0, dy = 0;
-        const mouseDx = input.getMouseDx(this.x);
-        const mouseDy = input.getMouseDy(this.y);
+        const move = input.getMoveDirection(this.x, this.y);
+        const isTouchOrMouse = input.touchMove.active || input.mouse.active;
+        const moveSpeed = isTouchOrMouse ? this.speed * 1.5 : this.speed;
 
-        if (input.isLeft()) dx -= 1;
-        else if (mouseDx < 0) dx = mouseDx;
-        if (input.isRight()) dx += 1;
-        else if (mouseDx > 0) dx = mouseDx;
-        if (input.isUp()) dy -= 1;
-        else if (mouseDy < 0) dy = mouseDy;
-        if (input.isDown()) dy += 1;
-        else if (mouseDy > 0) dy = mouseDy;
+        this.x += move.dx * moveSpeed * dt;
+        this.y += move.dy * moveSpeed * dt;
 
-        if (dx !== 0 && dy !== 0) {
-            const len = Math.sqrt(dx * dx + dy * dy);
-            dx /= len; dy /= len;
-        }
-
-        const isTouchOrMouse = input.mouse.active || input.touchActive;
-        const moveSpeed = isTouchOrMouse ? this.speed * 1.6 : this.speed;
-
-        this.x += dx * moveSpeed * dt;
-        this.y += dy * moveSpeed * dt;
-
-        this.tilt += (dx * 0.3 - this.tilt) * 5 * dt;
+        this.tilt += (move.dx * 0.3 - this.tilt) * 8 * dt;
 
         this.x = Math.max(this.width / 2, Math.min(this.cw - this.width / 2, this.x));
         this.y = Math.max(this.height / 2, Math.min(this.ch - this.height / 2, this.y));
