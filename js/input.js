@@ -2,7 +2,7 @@ export class Input {
     constructor() {
         this.keys = {};
         this.prevKeys = {};
-        this.mouse = { x: 0, y: 0, down: false, justPressed: false, active: false };
+        this.mouse = { x: 0, y: 0, down: false, justPressed: false, active: false, holdTime: 0 };
         this.touchStart = false;
         this.touchMove = { active: false, targetX: 0, targetY: 0 };
         this.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -10,6 +10,8 @@ export class Input {
         this.touchActive = false;
         this.tapSpeed = 0;
         this.tapTimes = [];
+        this.isHolding = false;
+        this.holdTimer = 0;
 
         this._bindKeyboard();
         this._bindMouse();
@@ -27,7 +29,10 @@ export class Input {
         window.addEventListener('blur', () => {
             this.keys = {};
             this.mouse.down = false;
+            this.mouse.holdTime = 0;
             this.touchMove.active = false;
+            this.isHolding = false;
+            this.holdTimer = 0;
         });
     }
 
@@ -45,16 +50,13 @@ export class Input {
             e.preventDefault();
             this.mouse.down = true;
             this.mouse.justPressed = true;
-
-            const now = Date.now();
-            this.tapTimes.push(now);
-            if (this.tapTimes.length > 5) this.tapTimes.shift();
-            if (this.tapTimes.length >= 2) {
-                const timeDiff = this.tapTimes[this.tapTimes.length - 1] - this.tapTimes[0];
-                this.tapSpeed = Math.min(1, (this.tapTimes.length - 1) / (timeDiff / 1000 + 0.5));
-            }
+            this.mouse.holdTime = 0;
         });
-        canvas.addEventListener('mouseup', () => { this.mouse.down = false; });
+        canvas.addEventListener('mouseup', () => {
+            this.mouse.down = false;
+            this.mouse.holdTime = 0;
+            this.isHolding = false;
+        });
         canvas.addEventListener('contextmenu', e => e.preventDefault());
         canvas.addEventListener('mouseleave', () => { this.mouse.active = false; });
     }
@@ -66,6 +68,8 @@ export class Input {
             e.preventDefault();
             this.touchStart = true;
             this.touchActive = true;
+            this.isHolding = false;
+            this.holdTimer = 0;
 
             const now = Date.now();
             this.tapTimes.push(now);
@@ -109,6 +113,8 @@ export class Input {
                 if (touch.identifier === this.moveTouchId) {
                     this.moveTouchId = null;
                     this.touchMove.active = false;
+                    this.isHolding = false;
+                    this.holdTimer = 0;
                 }
             }
             if (e.touches.length === 0) this.touchActive = false;
@@ -119,16 +125,32 @@ export class Input {
                 if (touch.identifier === this.moveTouchId) {
                     this.moveTouchId = null;
                     this.touchMove.active = false;
+                    this.isHolding = false;
+                    this.holdTimer = 0;
                 }
             }
             this.touchActive = false;
         });
     }
 
-    update() {
+    update(dt) {
         this.prevKeys = { ...this.keys };
         this.mouse.justPressed = false;
         this.touchStart = false;
+
+        if (this.mouse.down) {
+            this.mouse.holdTime += dt;
+            if (this.mouse.holdTime > 0.15) {
+                this.isHolding = true;
+            }
+        }
+
+        if (this.touchMove.active) {
+            this.holdTimer += dt;
+            if (this.holdTimer > 0.15) {
+                this.isHolding = true;
+            }
+        }
 
         if (this.tapTimes.length > 0) {
             const now = Date.now();
@@ -149,6 +171,7 @@ export class Input {
     isDown() { return this.isKeyDown('ArrowDown') || this.isKeyDown('KeyS'); }
 
     isShooting() { return this.mouse.down || this.isKeyDown('Space'); }
+    isShootJustPressed() { return this.mouse.justPressed || this.isKeyJustPressed('Space'); }
     isStart() { return this.isKeyJustPressed('Space') || this.mouse.justPressed || this.touchStart; }
     isPause() { return this.isKeyJustPressed('KeyP'); }
     isBomb() { return this.isKeyJustPressed('KeyB'); }

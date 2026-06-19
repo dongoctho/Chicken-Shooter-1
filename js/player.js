@@ -12,20 +12,31 @@ export const WEAPON_TYPE = {
     PLASMA: 'plasma'
 };
 
-const HEAT_PER_SHOT = {
-    [WEAPON_TYPE.NORMAL]: 2,
-    [WEAPON_TYPE.DOUBLE]: 3,
-    [WEAPON_TYPE.TRIPLE]: 3,
-    [WEAPON_TYPE.SPREAD]: 4,
-    [WEAPON_TYPE.LASER]: 5,
-    [WEAPON_TYPE.ROCKET]: 6,
-    [WEAPON_TYPE.PLASMA]: 4
+const HEAT_TAP = {
+    [WEAPON_TYPE.NORMAL]: 1.5,
+    [WEAPON_TYPE.DOUBLE]: 2,
+    [WEAPON_TYPE.TRIPLE]: 2,
+    [WEAPON_TYPE.SPREAD]: 2.5,
+    [WEAPON_TYPE.LASER]: 3,
+    [WEAPON_TYPE.ROCKET]: 3.5,
+    [WEAPON_TYPE.PLASMA]: 2.5
+};
+
+const HEAT_HOLD = {
+    [WEAPON_TYPE.NORMAL]: 3,
+    [WEAPON_TYPE.DOUBLE]: 4,
+    [WEAPON_TYPE.TRIPLE]: 4,
+    [WEAPON_TYPE.SPREAD]: 5,
+    [WEAPON_TYPE.LASER]: 6,
+    [WEAPON_TYPE.ROCKET]: 7,
+    [WEAPON_TYPE.PLASMA]: 5
 };
 
 const OVERHEAT_COOLDOWN = 1.5;
-const HEAT_DECAY_RATE = 20;
+const HEAT_DECAY_RATE = 25;
 const MAX_HEAT = 150;
 const OVERHEAT_THRESHOLD = 130;
+const HOLD_FIRE_RATE = 0.08;
 
 export class Player {
     constructor(canvasWidth, canvasHeight, bulletPool, particlePool) {
@@ -193,16 +204,14 @@ export class Player {
 
         this.fireTimer -= dt;
 
-        const isMoving = moveX !== 0 || moveY !== 0;
-        const shouldFire = input.isShooting() || isMoving;
-
-        if (shouldFire && this.fireTimer <= 0 && !this.overheated) {
-            this.shoot();
-            let currentFireRate = this.fireRate;
-            if (input.tapSpeed > 0) {
-                currentFireRate = Math.max(0.03, this.fireRate * (1 - input.tapSpeed * 0.5));
-            }
-            this.fireTimer = currentFireRate;
+        if (input.isShootJustPressed() && !this.overheated) {
+            this.shoot(false);
+            this.fireTimer = this.fireRate;
+        } else if (input.isHolding && input.isShooting() && this.fireTimer <= 0 && !this.overheated) {
+            this.shoot(true);
+            this.fireTimer = HOLD_FIRE_RATE;
+        } else if (!input.isShooting() && !input.touchMove.active) {
+            this.shootRequested = false;
         }
 
         if (this.overheated && Math.random() < 0.3) {
@@ -212,9 +221,10 @@ export class Player {
         }
     }
 
-    shoot() {
+    shoot(isHold) {
         const dmg = this.baseDamage * this.damageLevel;
-        const heatIncrease = HEAT_PER_SHOT[this.weapon] || 5;
+        const heatTable = isHold ? HEAT_HOLD : HEAT_TAP;
+        const heatIncrease = heatTable[this.weapon] || 3;
 
         this.heat += heatIncrease;
 
