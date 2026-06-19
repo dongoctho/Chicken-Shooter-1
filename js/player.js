@@ -204,14 +204,24 @@ export class Player {
 
         this.fireTimer -= dt;
 
-        if (input.isShootJustPressed() && !this.overheated) {
-            this.shoot(false);
-            this.fireTimer = this.fireRate;
-        } else if (input.isHolding && input.isShooting() && this.fireTimer <= 0 && !this.overheated) {
-            this.shoot(true);
-            this.fireTimer = HOLD_FIRE_RATE;
-        } else if (!input.isShooting() && !input.touchMove.active) {
-            this.shootRequested = false;
+        const isDesktop = !input.isMobile;
+
+        if (isDesktop) {
+            if (input.isShootJustPressed() && !this.overheated) {
+                this.shoot(false, false);
+                this.fireTimer = this.fireRate;
+            } else if (input.isShooting() && this.fireTimer <= 0 && !this.overheated) {
+                this.shoot(true, false);
+                this.fireTimer = HOLD_FIRE_RATE;
+            }
+        } else {
+            if (input.isShootJustPressed() && !this.overheated) {
+                this.shoot(false, true);
+                this.fireTimer = this.fireRate;
+            } else if (input.isHolding && input.touchMove.active && this.fireTimer <= 0 && !this.overheated) {
+                this.shoot(true, true);
+                this.fireTimer = HOLD_FIRE_RATE;
+            }
         }
 
         if (this.overheated && Math.random() < 0.3) {
@@ -221,55 +231,83 @@ export class Player {
         }
     }
 
-    shoot(isHold) {
+    shoot(isHold, useHeat) {
         const dmg = this.baseDamage * this.damageLevel;
-        const heatTable = isHold ? HEAT_HOLD : HEAT_TAP;
-        const heatIncrease = heatTable[this.weapon] || 3;
 
-        this.heat += heatIncrease;
+        if (useHeat) {
+            const heatTable = isHold ? HEAT_HOLD : HEAT_TAP;
+            const heatIncrease = heatTable[this.weapon] || 3;
+            this.heat += heatIncrease;
 
-        if (this.heat >= MAX_HEAT) {
-            this.overheated = true;
-            this.overheatTimer = OVERHEAT_COOLDOWN;
-            this.overheatFlash = 0.5;
-            assetLoader.playHit();
-            return;
+            if (this.heat >= MAX_HEAT) {
+                this.overheated = true;
+                this.overheatTimer = OVERHEAT_COOLDOWN;
+                this.overheatFlash = 0.5;
+                assetLoader.playHit();
+                return;
+            }
         }
 
         assetLoader.playShoot();
 
-        switch (this.weapon) {
-            case WEAPON_TYPE.NORMAL:
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
-                break;
-            case WEAPON_TYPE.DOUBLE:
-                this.bulletPool.get(this.x - 7, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
-                this.bulletPool.get(this.x + 7, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
-                break;
-            case WEAPON_TYPE.TRIPLE:
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
-                this.bulletPool.get(this.x - 10, this.y - this.height / 2 + 5, -30, -430, dmg, BULLET_TYPE.PLAYER);
-                this.bulletPool.get(this.x + 10, this.y - this.height / 2 + 5, 30, -430, dmg, BULLET_TYPE.PLAYER);
-                break;
-            case WEAPON_TYPE.SPREAD:
-                for (let i = -2; i <= 2; i++) {
-                    const angle = -Math.PI / 2 + i * 0.2;
-                    this.bulletPool.get(this.x, this.y - this.height / 2, Math.cos(angle) * 380, Math.sin(angle) * 380, dmg, BULLET_TYPE.PLAYER);
-                }
-                break;
-            case WEAPON_TYPE.LASER:
-                assetLoader.playLaser();
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -600, dmg * 1.5, BULLET_TYPE.LASER);
-                break;
-            case WEAPON_TYPE.ROCKET:
-                assetLoader.playRocket();
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -300, dmg * 2, BULLET_TYPE.ROCKET);
-                break;
-            case WEAPON_TYPE.PLASMA:
-                this.bulletPool.get(this.x - 12, this.y, -15, -380, dmg, BULLET_TYPE.PLASMA);
-                this.bulletPool.get(this.x + 12, this.y, 15, -380, dmg, BULLET_TYPE.PLASMA);
-                this.bulletPool.get(this.x, this.y - this.height / 2, 0, -400, dmg, BULLET_TYPE.PLASMA);
-                break;
+        if (isHold && !useHeat) {
+            switch (this.weapon) {
+                case WEAPON_TYPE.NORMAL:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.DOUBLE:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.TRIPLE:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.SPREAD:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.LASER:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -600, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.ROCKET:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -300, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.PLASMA:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -400, dmg, BULLET_TYPE.PLAYER);
+                    break;
+            }
+        } else {
+            switch (this.weapon) {
+                case WEAPON_TYPE.NORMAL:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.DOUBLE:
+                    this.bulletPool.get(this.x - 7, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                    this.bulletPool.get(this.x + 7, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.TRIPLE:
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -450, dmg, BULLET_TYPE.PLAYER);
+                    this.bulletPool.get(this.x - 10, this.y - this.height / 2 + 5, -30, -430, dmg, BULLET_TYPE.PLAYER);
+                    this.bulletPool.get(this.x + 10, this.y - this.height / 2 + 5, 30, -430, dmg, BULLET_TYPE.PLAYER);
+                    break;
+                case WEAPON_TYPE.SPREAD:
+                    for (let i = -2; i <= 2; i++) {
+                        const angle = -Math.PI / 2 + i * 0.2;
+                        this.bulletPool.get(this.x, this.y - this.height / 2, Math.cos(angle) * 380, Math.sin(angle) * 380, dmg, BULLET_TYPE.PLAYER);
+                    }
+                    break;
+                case WEAPON_TYPE.LASER:
+                    assetLoader.playLaser();
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -600, dmg * 1.5, BULLET_TYPE.LASER);
+                    break;
+                case WEAPON_TYPE.ROCKET:
+                    assetLoader.playRocket();
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -300, dmg * 2, BULLET_TYPE.ROCKET);
+                    break;
+                case WEAPON_TYPE.PLASMA:
+                    this.bulletPool.get(this.x - 12, this.y, -15, -380, dmg, BULLET_TYPE.PLASMA);
+                    this.bulletPool.get(this.x + 12, this.y, 15, -380, dmg, BULLET_TYPE.PLASMA);
+                    this.bulletPool.get(this.x, this.y - this.height / 2, 0, -400, dmg, BULLET_TYPE.PLASMA);
+                    break;
+            }
         }
     }
 
