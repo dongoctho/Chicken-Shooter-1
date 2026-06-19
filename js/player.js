@@ -56,6 +56,7 @@ export class Player {
         this.weaponLevel = 1;
         this.fireRate = 0.15;
         this.fireTimer = 0;
+        this.autoFireTimer = 0;
         this.damageLevel = 1;
         this.baseDamage = 1;
 
@@ -90,7 +91,10 @@ export class Player {
         this.weaponLevel = 1;
         this.fireRate = 0.15;
         this.fireTimer = 0;
+        this.autoFireTimer = 0;
         this.damageLevel = 1;
+        this.baseDamage = 1;
+
         this.shieldActive = false;
         this.shieldHits = 0;
         this.magnetActive = false;
@@ -203,25 +207,19 @@ export class Player {
         this.y = Math.max(this.height / 2, Math.min(this.ch - this.height / 2, this.y));
 
         this.fireTimer -= dt;
+        this.autoFireTimer -= dt;
 
-        const isDesktop = !input.isMobile;
+        if (this.autoFireTimer <= 0 && !this.overheated) {
+            this.shootSlow();
+            this.autoFireTimer = 0.35;
+        }
 
-        if (isDesktop) {
-            if (input.isShootJustPressed() && !this.overheated) {
-                this.shoot(false, false);
-                this.fireTimer = this.fireRate;
-            } else if (input.isShooting() && this.fireTimer <= 0 && !this.overheated) {
-                this.shoot(true, false);
-                this.fireTimer = HOLD_FIRE_RATE;
-            }
-        } else {
-            if (input.isShootJustPressed() && !this.overheated) {
-                this.shoot(false, true);
-                this.fireTimer = this.fireRate;
-            } else if (input.isHolding && input.touchMove.active && this.fireTimer <= 0 && !this.overheated) {
-                this.shoot(true, true);
-                this.fireTimer = HOLD_FIRE_RATE;
-            }
+        if (input.isShootJustPressed() && !this.overheated) {
+            this.shoot(false, !input.isMobile);
+            this.fireTimer = this.fireRate;
+        } else if (input.isShooting() && this.fireTimer <= 0 && !this.overheated) {
+            this.shoot(true, !input.isMobile);
+            this.fireTimer = HOLD_FIRE_RATE;
         }
 
         if (this.overheated && Math.random() < 0.3) {
@@ -309,6 +307,11 @@ export class Player {
                     break;
             }
         }
+    }
+
+    shootSlow() {
+        const dmg = this.baseDamage * this.damageLevel;
+        this.bulletPool.get(this.x, this.y - this.height / 2, 0, -400, dmg * 0.7, BULLET_TYPE.PLAYER);
     }
 
     useBomb() {
